@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle SQL Tapşırıqları</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #13161e;
+    --surface2: #1a1e29;
+    --border: #252b3b;
+    --border2: #2e3650;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --blue: #38bdf8;
+    --green: #4ade80;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --purple: #a78bfa;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Space Grotesk', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(249,115,22,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(249,115,22,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    display: flex;
+    height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 400;
+    color: var(--accent);
+    background: rgba(249,115,22,0.1);
+    border: 1px solid rgba(249,115,22,0.2);
+    padding: 4px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .logo h1 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .logo p {
+    font-size: 12px;
+    color: var(--text3);
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* Progress in sidebar */
+  .sidebar-progress {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .progress-count {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--yellow));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(.4,0,.2,1);
+    width: 0%;
+  }
+
+  .nav-section {
+    padding: 12px 12px 4px;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .nav-items {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 12px;
+  }
+
+  .nav-items::-webkit-scrollbar { width: 4px; }
+  .nav-items::-webkit-scrollbar-track { background: transparent; }
+  .nav-items::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    margin: 1px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .nav-item:hover { background: var(--surface2); }
+
+  .nav-item.active {
+    background: rgba(249,115,22,0.1);
+    border-color: rgba(249,115,22,0.2);
+  }
+
+  .nav-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .nav-info { flex: 1; min-width: 0; }
+
+  .nav-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nav-item.active .nav-name { color: var(--accent); }
+
+  .nav-meta {
+    font-size: 11px;
+    color: var(--text3);
+    font-family: var(--mono);
+    margin-top: 1px;
+  }
+
+  .nav-check {
+    font-size: 12px;
+    color: var(--green);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .nav-item.completed .nav-check { opacity: 1; }
+
+  /* === MAIN === */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Top bar */
+  .topbar {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .topic-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .breadcrumb-root {
+    font-size: 12px;
+    font-family: var(--mono);
+    color: var(--text3);
+  }
+
+  .breadcrumb-sep { color: var(--text3); font-size: 14px; }
+
+  .breadcrumb-current {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .diff-pills {
+    display: flex;
+    gap: 6px;
+  }
+
+  .diff-pill {
+    font-size: 11px;
+    font-family: var(--mono);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .diff-pill.all { border-color: var(--border2); color: var(--text3); }
+  .diff-pill.all.active { background: rgba(148,163,184,0.1); color: var(--text); border-color: var(--text3); }
+  .diff-pill.easy { border-color: rgba(74,222,128,0.3); color: var(--green); }
+  .diff-pill.easy.active { background: rgba(74,222,128,0.1); }
+  .diff-pill.medium { border-color: rgba(251,191,36,0.3); color: var(--yellow); }
+  .diff-pill.medium.active { background: rgba(251,191,36,0.1); }
+  .diff-pill.hard { border-color: rgba(248,113,113,0.3); color: var(--red); }
+  .diff-pill.hard.active { background: rgba(248,113,113,0.1); }
+
+  /* Topic header */
+  .topic-header {
+    padding: 32px 32px 0;
+  }
+
+  .topic-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+
+  .topic-icon-big {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .topic-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+
+  .topic-desc {
+    font-size: 14px;
+    color: var(--text2);
+    margin-top: 4px;
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  .topic-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 20px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ts {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-family: var(--mono);
+  }
+
+  .ts-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* Tasks list */
+  .tasks-list {
+    padding: 24px 32px 48px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .task-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .task-card:hover { border-color: var(--border2); }
+  .task-card.solved { border-color: rgba(74,222,128,0.25); }
+
+  .task-top {
+    padding: 20px 20px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .task-num {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text3);
+    font-weight: 400;
+    margin-bottom: 4px;
+  }
+
+  .task-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  .task-solved-badge {
+    display: none;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--green);
+    background: rgba(74,222,128,0.1);
+    border: 1px solid rgba(74,222,128,0.2);
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .task-card.solved .task-solved-badge { display: flex; }
+
+  .level-badge {
+    font-size: 10px;
+    font-family: var(--mono);
+    font-weight: 500;
+    padding: 3px 9px;
+    border-radius: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .level-easy { background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.2); }
+  .level-medium { background: rgba(251,191,36,0.1); color: var(--yellow); border: 1px solid rgba(251,191,36,0.2); }
+  .level-hard { background: rgba(248,113,113,0.1); color: var(--red); border: 1px solid rgba(248,113,113,0.2); }
+
+  .badges-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .task-body {
+    padding: 12px 20px 0;
+  }
+
+  .task-desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.7;
+    margin-bottom: 14px;
+  }
+
+  .schema-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .schema-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--blue);
+    line-height: 1.8;
+    margin-bottom: 16px;
+    white-space: pre;
+  }
+
+  .editor-area {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .editor-area:focus-within { border-color: rgba(249,115,22,0.4); }
+
+  .editor-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface2);
+  }
+
+  .editor-lang {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .editor-dots {
+    display: flex;
+    gap: 5px;
+  }
+
+  .editor-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  textarea.sql-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    padding: 14px;
+    resize: vertical;
+    min-height: 90px;
+    line-height: 1.7;
+    tab-size: 2;
+  }
+
+  textarea.sql-input::placeholder { color: var(--text3); }
+
+  .task-actions {
+    padding: 0 20px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-run {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .btn-run:hover { background: var(--accent2); }
+  .btn-run:active { transform: scale(0.98); }
+
+  .btn-hint {
+    background: transparent;
+    color: var(--blue);
+    border-color: rgba(56,189,248,0.25);
+  }
+
+  .btn-hint:hover { background: rgba(56,189,248,0.08); }
+
+  .btn-solution {
+    background: transparent;
+    color: var(--purple);
+    border-color: rgba(167,139,250,0.25);
+  }
+
+  .btn-solution:hover { background: rgba(167,139,250,0.08); }
+
+  .btn-reset {
+    background: transparent;
+    color: var(--text3);
+    border-color: var(--border);
+    margin-left: auto;
+  }
+
+  .btn-reset:hover { color: var(--text2); border-color: var(--border2); }
+
+  .feedback-box {
+    margin: 0 20px 16px;
+    padding: 12px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: var(--mono);
+    display: none;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.6;
+  }
+
+  .feedback-box.show { display: flex; }
+  .feedback-box.correct { background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2); color: var(--green); }
+  .feedback-box.wrong { background: rgba(248,113,113,0.08); border: 1px solid rgba(248,113,113,0.2); color: var(--red); }
+  .feedback-box.hint { background: rgba(56,189,248,0.08); border: 1px solid rgba(56,189,248,0.2); color: var(--blue); }
+
+  .solution-box {
+    margin: 0 20px 16px;
+    display: none;
+  }
+
+  .solution-box.show { display: block; }
+
+  .solution-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--purple);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .solution-code {
+    background: rgba(167,139,250,0.06);
+    border: 1px solid rgba(167,139,250,0.2);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--purple);
+    white-space: pre-wrap;
+    line-height: 1.7;
+  }
+
+  /* Empty state */
+  .empty-state {
+    padding: 48px 32px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 14px;
+    display: none;
+  }
+
+  /* Confetti particle */
+  @keyframes confetti-fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(60px) rotate(360deg); opacity: 0; }
+  }
+
+  .confetti { position: fixed; pointer-events: none; z-index: 9999; animation: confetti-fall 0.8s ease-out forwards; font-size: 18px; }
+
+  /* Animations */
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .task-card { animation: slideIn 0.3s ease both; }
+  .task-card:nth-child(1) { animation-delay: 0.05s; }
+  .task-card:nth-child(2) { animation-delay: 0.10s; }
+  .task-card:nth-child(3) { animation-delay: 0.15s; }
+  .task-card:nth-child(4) { animation-delay: 0.20s; }
+  .task-card:nth-child(5) { animation-delay: 0.25s; }
+
+  .hint-count {
+    font-size: 10px;
+    background: rgba(56,189,248,0.15);
+    color: var(--blue);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-badge">
+        <span style="width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;"></span>
+        Oracle SQL
+      </div>
+      <h1>SQL<br>Tapşırıqları</h1>
+      <p>Praktiki öyrənmə platformu</p>
+    </div>
+
+    <div class="sidebar-progress">
+      <div class="progress-row">
+        <span class="progress-label">İrəliləyiş</span>
+        <span class="progress-count" id="prog-count">0 / 0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="prog-fill"></div>
+      </div>
+    </div>
+
+    <div class="nav-items">
+      <div class="nav-section">Mövzular</div>
+      <div id="nav-list"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <div class="topbar">
+      <div class="topic-breadcrumb">
+        <span class="breadcrumb-root">sql-tasks</span>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current" id="breadcrumb-cur">—</span>
+      </div>
+      <div class="diff-pills">
+        <div class="diff-pill all active" onclick="filterDiff('all',this)">Hamısı</div>
+        <div class="diff-pill easy" onclick="filterDiff('easy',this)">Asan</div>
+        <div class="diff-pill medium" onclick="filterDiff('medium',this)">Orta</div>
+        <div class="diff-pill hard" onclick="filterDiff('hard',this)">Çətin</div>
+      </div>
+    </div>
+
+    <div class="topic-header" id="topic-header"></div>
+    <div class="tasks-list" id="tasks-list"></div>
+    <div class="empty-state" id="empty-state">Bu filtrdə tapşırıq yoxdur.</div>
+  </main>
+</div>
+
+<script>
+const TOPICS = [
+  {
+    id: 'select',
+    icon: '⬡',
+    iconBg: 'rgba(56,189,248,0.12)',
+    iconColor: '#38bdf8',
+    name: 'SELECT əsasları',
+    desc: 'SELECT ifadəsinin əsas sintaksisi, sütun seçimi, ləqəb, DISTINCT',
+    tasks: [
+      {
+        title: 'Bütün sütunları seçin',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindən bütün sütunları seçən SQL sorğusu yazın.',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  first_name    VARCHAR2(50),\n  last_name     VARCHAR2(50),\n  salary        NUMBER,\n  department_id NUMBER,\n  hire_date     DATE\n)',
+        solution: 'SELECT *\nFROM employees;',
+        hints: ['* işarəsi bütün sütunları seçir.', 'FROM açar sözündən sonra cədvəl adını yazın.'],
+        check: s => /select\s+\*/i.test(s) && /from\s+employees/i.test(s)
+      },
+      {
+        title: 'Müəyyən sütunları seçin',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindən yalnız first_name, last_name və salary sütunlarını seçin.',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  first_name    VARCHAR2(50),\n  last_name     VARCHAR2(50),\n  salary        NUMBER\n)',
+        solution: 'SELECT first_name, last_name, salary\nFROM employees;',
+        hints: ['Sütun adlarını vergüllə ayırın.', 'SELECT first_name, last_name, salary FROM ...'],
+        check: s => /first_name/i.test(s) && /last_name/i.test(s) && /salary/i.test(s) && /from\s+employees/i.test(s)
+      },
+      {
+        title: 'Sütuna ləqəb verin (ALIAS)',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindən first_name sütununu "Ad", salary sütununu "Maaş" olaraq göstərin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name AS "Ad", salary AS "Maaş"\nFROM employees;',
+        hints: ['AS açar sözü ilə ləqəb vermək olar.', 'SELECT sütun AS "Ləqəb" ...'],
+        check: s => /as\s+["']?ad["']?/i.test(s) || /as\s+["']?maaş["']?/i.test(s) || /as\s+["']?maas["']?/i.test(s)
+      },
+      {
+        title: 'DISTINCT istifadəsi',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindəki unikal department_id dəyərlərini seçin (dublikatlar olmadan).',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  first_name    VARCHAR2(50),\n  department_id NUMBER\n)',
+        solution: 'SELECT DISTINCT department_id\nFROM employees;',
+        hints: ['DISTINCT açar sözü dublikatları silir.', 'SELECT DISTINCT sütun_adı FROM ...'],
+        check: s => /select\s+distinct\s+department_id/i.test(s)
+      },
+      {
+        title: 'Hesablama sütunu',
+        level: 'medium',
+        desc: 'EMPLOYEES cədvəlindən işçinin tam adını (first_name || \' \' || last_name) "Tam_Ad" ləqəbi ilə, illik maaşını (salary * 12) "Illik_Maas" ləqəbi ilə seçin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  last_name  VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name || \' \' || last_name AS "Tam_Ad",\n       salary * 12 AS "Illik_Maas"\nFROM employees;',
+        hints: ['|| operatoru mətnləri birləşdirir.', 'salary * 12 illik maaşı hesablayır.'],
+        check: s => /\|\|/i.test(s) && /salary\s*\*\s*12/i.test(s)
+      }
+    ]
+  },
+  {
+    id: 'where',
+    icon: '⊡',
+    iconBg: 'rgba(251,191,36,0.12)',
+    iconColor: '#fbbf24',
+    name: 'WHERE / Filtrlər',
+    desc: 'Şərtlər, müqayisə operatorları, BETWEEN, LIKE, IN, NULL yoxlanması',
+    tasks: [
+      {
+        title: 'Sadə müqayisə',
+        level: 'easy',
+        desc: 'Maaşı 5000-dən böyük olan işçilərin adını və maaşını seçin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  last_name  VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, last_name, salary\nFROM employees\nWHERE salary > 5000;',
+        hints: ['WHERE açar sözündən sonra şərt yazılır.', '>  operatoru böyükdür mənasında işlənir.'],
+        check: s => /where\s+salary\s*>\s*5000/i.test(s)
+      },
+      {
+        title: 'BETWEEN operatoru',
+        level: 'easy',
+        desc: 'Maaşı 3000 ilə 7000 arasında (daxil olmaqla) olan işçiləri seçin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary\nFROM employees\nWHERE salary BETWEEN 3000 AND 7000;',
+        hints: ['BETWEEN ... AND ... həm başlanğıc həm son dəyəri daxil edir.', 'WHERE salary BETWEEN 3000 AND 7000'],
+        check: s => /between\s+3000\s+and\s+7000/i.test(s)
+      },
+      {
+        title: 'LIKE nümunəsi',
+        level: 'easy',
+        desc: 'Adı "A" hərfi ilə başlayan işçiləri tapın.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  last_name  VARCHAR2(50)\n)',
+        solution: "SELECT first_name, last_name\nFROM employees\nWHERE first_name LIKE 'A%';",
+        hints: ["LIKE operatoru nümunəyə görə filtrlər.", "% işarəsi istənilən sayda simvolu əvəz edir."],
+        check: s => /first_name\s+like\s+'a%'/i.test(s)
+      },
+      {
+        title: 'IN operatoru',
+        level: 'medium',
+        desc: 'Department_id dəyəri 10, 20 və ya 30 olan işçiləri seçin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, department_id\nFROM employees\nWHERE department_id IN (10, 20, 30);',
+        hints: ['IN (...) bir neçə dəyəri eyni anda yoxlayır.', 'WHERE department_id IN (10, 20, 30)'],
+        check: s => /department_id\s+in\s*\(\s*10\s*,\s*20\s*,\s*30\s*\)/i.test(s)
+      },
+      {
+        title: 'IS NULL yoxlanması',
+        level: 'medium',
+        desc: 'Manager_id dəyəri NULL olan işçiləri seçin (bunlar top-level menecerlərdir).',
+        schema: 'EMPLOYEES(\n  first_name  VARCHAR2(50),\n  last_name   VARCHAR2(50),\n  manager_id  NUMBER\n)',
+        solution: 'SELECT first_name, last_name\nFROM employees\nWHERE manager_id IS NULL;',
+        hints: ['NULL dəyərini IS NULL ilə yoxlayın.', '= NULL düzgün deyil, IS NULL istifadə edin.'],
+        check: s => /manager_id\s+is\s+null/i.test(s)
+      },
+      {
+        title: 'Mürəkkəb şərtlər (AND/OR)',
+        level: 'medium',
+        desc: 'Department_id 50 olan VƏ maaşı 4000-dən çox olan, YAXUD department_id 80 olan işçiləri seçin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  salary        NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, salary, department_id\nFROM employees\nWHERE (department_id = 50 AND salary > 4000)\n   OR department_id = 80;',
+        hints: ['AND iki şərtin hər ikisinin doğru olmasını tələb edir.', 'OR istənilən birinin doğru olması kifayət edir.', 'Mötərizə istifadə edin: (... AND ...) OR ...'],
+        check: s => /and/i.test(s) && /or/i.test(s)
+      }
+    ]
+  },
+  {
+    id: 'functions',
+    icon: '⊕',
+    iconBg: 'rgba(167,139,250,0.12)',
+    iconColor: '#a78bfa',
+    name: 'Funksiyalar',
+    desc: 'Aqreqat funksiyalar (COUNT, SUM, AVG, MAX, MIN) və tək sətir funksiyaları',
+    tasks: [
+      {
+        title: 'COUNT - sətir sayı',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindəki işçilərin ümumi sayını hesablayın.',
+        schema: 'EMPLOYEES(\n  employee_id NUMBER,\n  first_name  VARCHAR2(50)\n)',
+        solution: 'SELECT COUNT(*)\nFROM employees;',
+        hints: ['COUNT(*) bütün sətirləri sayır.', 'SELECT COUNT(*) FROM employees'],
+        check: s => /select\s+count\s*\(\s*\*\s*\)/i.test(s)
+      },
+      {
+        title: 'SUM və AVG',
+        level: 'easy',
+        desc: 'Bütün işçilərin ümumi maaş cəmini və orta maaşını eyni sorğuda hesablayın.',
+        schema: 'EMPLOYEES(\n  employee_id NUMBER,\n  salary      NUMBER\n)',
+        solution: 'SELECT SUM(salary) AS toplam_maas,\n       AVG(salary) AS orta_maas\nFROM employees;',
+        hints: ['SUM() cəm, AVG() orta dəyər hesablayır.', 'Hər iki funksiyanı eyni SELECT-də yaza bilərsiniz.'],
+        check: s => /sum\s*\(\s*salary\s*\)/i.test(s) && /avg\s*\(\s*salary\s*\)/i.test(s)
+      },
+      {
+        title: 'MAX və MIN',
+        level: 'easy',
+        desc: 'EMPLOYEES cədvəlindəki ən yüksək və ən aşağı maaşı tapın.',
+        schema: 'EMPLOYEES(\n  employee_id NUMBER,\n  salary      NUMBER\n)',
+        solution: 'SELECT MAX(salary) AS max_maas,\n       MIN(salary) AS min_maas\nFROM employees;',
+        hints: ['MAX() ən böyük, MIN() ən kiçik dəyəri tapır.'],
+        check: s => /max\s*\(\s*salary\s*\)/i.test(s) && /min\s*\(\s*salary\s*\)/i.test(s)
+      },
+      {
+        title: 'NVL - NULL əvəzlənməsi',
+        level: 'medium',
+        desc: 'İşçilərin adını və komissiya faizini göstərin. Commission_pct NULL olduqda 0 göstərin.',
+        schema: 'EMPLOYEES(\n  first_name     VARCHAR2(50),\n  commission_pct NUMBER  -- NULL ola bilər\n)',
+        solution: 'SELECT first_name,\n       NVL(commission_pct, 0) AS komissiya\nFROM employees;',
+        hints: ['NVL(dəyər, əvəzetmə) NULL dəyərləri əvəz edir.', 'NVL(commission_pct, 0)'],
+        check: s => /nvl\s*\(\s*commission_pct\s*,\s*0\s*\)/i.test(s)
+      },
+      {
+        title: 'UPPER / LOWER / LENGTH',
+        level: 'medium',
+        desc: 'İşçilərin last_name sütununu böyük hərflə, first_name-i kiçik hərflə göstərin. Həmçinin last_name-in uzunluğunu çıxarın.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  last_name  VARCHAR2(50)\n)',
+        solution: "SELECT UPPER(last_name)  AS boyuk_soyad,\n       LOWER(first_name) AS kicik_ad,\n       LENGTH(last_name)  AS uzunluq\nFROM employees;",
+        hints: ['UPPER() bütün hərfləri böyüdür.', 'LOWER() bütün hərfləri kiçildir.', 'LENGTH() sətrin uzunluğunu qaytarır.'],
+        check: s => /upper/i.test(s) && /lower/i.test(s) && /length/i.test(s)
+      },
+      {
+        title: 'TO_DATE ilə tarix filtri',
+        level: 'medium',
+        desc: '2020-01-01 tarixindən sonra işə qəbul edilmiş işçiləri seçin. TO_DATE funksiyasından istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  hire_date  DATE\n)',
+        solution: "SELECT first_name, hire_date\nFROM employees\nWHERE hire_date > TO_DATE('2020-01-01', 'YYYY-MM-DD');",
+        hints: ["TO_DATE('tarix','format') string-i tarixə çevirir.", "Format: 'YYYY-MM-DD'"],
+        check: s => /to_date/i.test(s) && /hire_date/i.test(s)
+      }
+    ]
+  },
+  {
+    id: 'groupby',
+    icon: '⊞',
+    iconBg: 'rgba(74,222,128,0.12)',
+    iconColor: '#4ade80',
+    name: 'GROUP BY / HAVING',
+    desc: 'Qruplaşdırma, aqreqat funksiyalar ilə birlikdə, HAVING şərti',
+    tasks: [
+      {
+        title: 'Sadə qruplaşdırma',
+        level: 'medium',
+        desc: 'Hər department_id üçün işçilərin sayını tapın.',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT department_id, COUNT(*) AS isci_sayi\nFROM employees\nGROUP BY department_id;',
+        hints: ['GROUP BY seçilmiş sütuna görə qruplaşdırır.', 'SELECT department_id, COUNT(*) ...'],
+        check: s => /group\s+by\s+department_id/i.test(s) && /count/i.test(s)
+      },
+      {
+        title: 'HAVING ilə filtr',
+        level: 'medium',
+        desc: 'İşçi sayı 5-dən çox olan departamentləri tapın.',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT department_id, COUNT(*) AS isci_sayi\nFROM employees\nGROUP BY department_id\nHAVING COUNT(*) > 5;',
+        hints: ['HAVING qruplaşdırılmış nəticəyə şərt tətbiq edir.', 'WHERE yerinə HAVING COUNT(*) > 5 istifadə edin.'],
+        check: s => /having\s+count\s*\(\s*\*\s*\)\s*>\s*5/i.test(s)
+      },
+      {
+        title: 'Hər departamentin MAX maaşı',
+        level: 'medium',
+        desc: 'Hər departamentin ən yüksək maaşını tapın, nəticəni max maaşa görə azalan qaydada sıralayın.',
+        schema: 'EMPLOYEES(\n  department_id NUMBER,\n  salary        NUMBER\n)',
+        solution: 'SELECT department_id,\n       MAX(salary) AS max_maas\nFROM employees\nGROUP BY department_id\nORDER BY max_maas DESC;',
+        hints: ['MAX(salary) ən böyük maaşı tapır.', 'ORDER BY ... DESC azalan sıralamadır.'],
+        check: s => /max\s*\(\s*salary\s*\)/i.test(s) && /group\s+by/i.test(s) && /order\s+by/i.test(s)
+      },
+      {
+        title: 'Orta maaşı 6000-dən çox olan departamentlər',
+        level: 'hard',
+        desc: 'Orta işçi maaşı 6000-dən yüksək olan departamentlər üçün department_id və orta maaşı göstərin.',
+        schema: 'EMPLOYEES(\n  department_id NUMBER,\n  salary        NUMBER\n)',
+        solution: 'SELECT department_id,\n       ROUND(AVG(salary), 2) AS orta_maas\nFROM employees\nGROUP BY department_id\nHAVING AVG(salary) > 6000\nORDER BY orta_maas DESC;',
+        hints: ['HAVING AVG(salary) > 6000 istifadə edin.', 'ROUND(AVG(salary), 2) dəqiq nəticə verir.'],
+        check: s => /having\s+avg\s*\(\s*salary\s*\)\s*>\s*6000/i.test(s)
+      }
+    ]
+  },
+  {
+    id: 'join',
+    icon: '⋈',
+    iconBg: 'rgba(249,115,22,0.12)',
+    iconColor: '#f97316',
+    name: 'JOIN',
+    desc: 'INNER JOIN, LEFT JOIN, RIGHT JOIN, SELF JOIN ilə cədvəl birləşdirmə',
+    tasks: [
+      {
+        title: 'INNER JOIN',
+        level: 'medium',
+        desc: 'İşçilərin adını və onların departamentinin adını göstərin.',
+        schema: 'EMPLOYEES(employee_id, first_name, department_id)\nDEPARTMENTS(department_id, department_name)',
+        solution: 'SELECT e.first_name, d.department_name\nFROM employees e\nINNER JOIN departments d\n  ON e.department_id = d.department_id;',
+        hints: ['INNER JOIN iki cədvəlin uyğun sətirləri ilə birləşdirir.', 'ON e.department_id = d.department_id'],
+        check: s => /(inner\s+join|join)/i.test(s) && /on[\s\S]+department_id/i.test(s)
+      },
+      {
+        title: 'LEFT JOIN',
+        level: 'medium',
+        desc: 'Bütün departamentləri və varsa işçi sayını göstərin. İşçisi olmayan departamentlər də görünməlidir.',
+        schema: 'EMPLOYEES(employee_id, department_id)\nDEPARTMENTS(department_id, department_name)',
+        solution: 'SELECT d.department_name,\n       COUNT(e.employee_id) AS isci_sayi\nFROM departments d\nLEFT JOIN employees e\n  ON d.department_id = e.department_id\nGROUP BY d.department_name;',
+        hints: ['LEFT JOIN sağ cədvəldə uyğunluq olmasa da sol cədvəli saxlayır.', 'COUNT(e.employee_id) NULL sətirləri saymaz.'],
+        check: s => /left\s+join/i.test(s)
+      },
+      {
+        title: 'SELF JOIN - rəhbər adı',
+        level: 'hard',
+        desc: 'Hər işçinin adını və onun birbaşa rəhbərinin adını göstərin.',
+        schema: 'EMPLOYEES(\n  employee_id NUMBER,\n  first_name  VARCHAR2(50),\n  manager_id  NUMBER  -- EMPLOYEES.employee_id-yə istinad edir\n)',
+        solution: "SELECT e.first_name AS isci,\n       m.first_name AS rehber\nFROM employees e\nLEFT JOIN employees m\n  ON e.manager_id = m.employee_id;",
+        hints: ['SELF JOIN eyni cədvəli iki fərqli ləqəblə birləşdirir.', 'e - işçi, m - menecer kimi istifadə edin.'],
+        check: s => {
+          const joins = (s.match(/join\s+employees/gi) || []).length;
+          return joins >= 2 || (s.toLowerCase().includes('self') || (s.match(/employees\s+\w/gi)||[]).length >= 2);
+        }
+      },
+      {
+        title: '3 cədvəl birləşdirmə',
+        level: 'hard',
+        desc: 'İşçinin adını, departament adını və şəhər adını göstərin.',
+        schema: 'EMPLOYEES(employee_id, first_name, department_id)\nDEPARTMENTS(department_id, department_name, location_id)\nLOCATIONS(location_id, city)',
+        solution: 'SELECT e.first_name, d.department_name, l.city\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nJOIN locations l   ON d.location_id = l.location_id;',
+        hints: ['Hər JOIN üçün ayrı ON şərti yazın.', 'FROM employees e JOIN departments d ON ... JOIN locations l ON ...'],
+        check: s => (s.match(/join/gi) || []).length >= 2
+      }
+    ]
+  },
+  {
+    id: 'subquery',
+    icon: '⊏',
+    iconBg: 'rgba(248,113,113,0.12)',
+    iconColor: '#f87171',
+    name: 'Subquery',
+    desc: 'Daxili sorğular, korrelyasiyalı subquery, EXISTS, skaler subquery',
+    tasks: [
+      {
+        title: 'Orta maaşdan çox qazananlar',
+        level: 'medium',
+        desc: 'Orta maaşdan çox qazanan işçiləri seçin. Subquery istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary\nFROM employees\nWHERE salary > (SELECT AVG(salary) FROM employees);',
+        hints: ['Daxili sorğu orta maaşı hesablayır.', 'WHERE salary > (SELECT AVG(salary) FROM employees)'],
+        check: s => /where\s+salary\s*>\s*\(\s*select\s+avg/i.test(s)
+      },
+      {
+        title: 'IN ilə subquery',
+        level: 'medium',
+        desc: '"IT" departamentindəki işçilərin adlarını seçin (subquery istifadə edin, JOIN yox).',
+        schema: 'EMPLOYEES(first_name, department_id)\nDEPARTMENTS(department_id, department_name)',
+        solution: "SELECT first_name\nFROM employees\nWHERE department_id IN (\n  SELECT department_id\n  FROM departments\n  WHERE department_name = 'IT'\n);",
+        hints: ["WHERE department_id IN (SELECT ...) istifadə edin.", "Daxili sorğu IT departamentinin id-sini qaytarır."],
+        check: s => /in\s*\(\s*select/i.test(s) && /department_name/i.test(s)
+      },
+      {
+        title: 'EXISTS operatoru',
+        level: 'hard',
+        desc: 'Ən azı bir sifariş vermiş müştərilərin adlarını seçin. EXISTS istifadə edin.',
+        schema: 'CUSTOMERS(customer_id, customer_name)\nORDERS(order_id, customer_id, order_date)',
+        solution: 'SELECT customer_name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1\n  FROM orders o\n  WHERE o.customer_id = c.customer_id\n);',
+        hints: ['EXISTS subquery nəticəsi boş deyilsə TRUE qaytarır.', 'WHERE EXISTS (SELECT 1 FROM orders WHERE ...)'],
+        check: s => /exists\s*\(/i.test(s) && /customer_id/i.test(s)
+      },
+      {
+        title: 'Skaler subquery',
+        level: 'hard',
+        desc: 'Hər işçinin adını və onun departamentindəki işçilərin sayını göstərin. SELECT içindəki subquery istifadə edin.',
+        schema: 'EMPLOYEES(\n  employee_id   NUMBER,\n  first_name    VARCHAR2(50),\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name,\n  (SELECT COUNT(*)\n   FROM employees e2\n   WHERE e2.department_id = e.department_id) AS dept_isci_sayi\nFROM employees e;',
+        hints: ['SELECT içərisindəki subquery skaler (bir dəyər) qaytarmalıdır.', 'Korrelyasiyalı subquery - xarici sorğuya istinad edir.'],
+        check: s => {
+          const selectCount = (s.match(/select/gi)||[]).length;
+          return selectCount >= 2 && /count/i.test(s);
+        }
+      }
+    ]
+  },
+  {
+    id: 'orderby',
+    icon: '⇅',
+    iconBg: 'rgba(56,189,248,0.12)',
+    iconColor: '#38bdf8',
+    name: 'ORDER BY / ROWNUM',
+    desc: 'Nəticəni sıralama, çoxlu sütun üzrə sıralama, ROWNUM ilə limit',
+    tasks: [
+      {
+        title: 'ASC sıralama',
+        level: 'easy',
+        desc: 'İşçiləri maaşa görə artan qaydada sıralayın.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary\nFROM employees\nORDER BY salary ASC;',
+        hints: ['ORDER BY sıralama üçün istifadə olunur.', 'ASC artan (default), DESC azalan sıralamadır.'],
+        check: s => /order\s+by\s+salary/i.test(s)
+      },
+      {
+        title: 'Çoxlu sütun sıralama',
+        level: 'medium',
+        desc: 'İşçiləri əvvəlcə department_id-yə görə artan, sonra salary-yə görə azalan sıralayın.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  salary        NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, department_id, salary\nFROM employees\nORDER BY department_id ASC, salary DESC;',
+        hints: ['ORDER BY bir neçə sütun ala bilər.', 'ORDER BY department_id ASC, salary DESC'],
+        check: s => /order\s+by[\s\S]+department_id[\s\S]+salary\s+desc/i.test(s)
+      },
+      {
+        title: 'ROWNUM ilə Top 5',
+        level: 'medium',
+        desc: 'Ən yüksək maaş alan ilk 5 işçini seçin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary\nFROM (\n  SELECT first_name, salary\n  FROM employees\n  ORDER BY salary DESC\n)\nWHERE ROWNUM <= 5;',
+        hints: ['Oracle-da ROWNUM xüsusi psevdo-sütundur.', 'Əvvəlcə ORDER BY ilə sıralayın, sonra ROWNUM tətbiq edin.', 'Subquery içdə ORDER BY, xaricdə ROWNUM <= 5'],
+        check: s => /rownum\s*<=\s*5/i.test(s) && /order\s+by\s+salary\s+desc/i.test(s)
+      }
+    ]
+  }
+];
+
+// State
+const solved = new Set();
+const hintState = {};
+let activeTopic = TOPICS[0].id;
+let activeFilter = 'all';
+
+function totalTasks() { return TOPICS.reduce((a, t) => a + t.tasks.length, 0); }
+
+function updateProgress() {
+  const total = totalTasks();
+  const done = solved.size;
+  document.getElementById('prog-count').textContent = `${done} / ${total}`;
+  document.getElementById('prog-fill').style.width = (done / total * 100) + '%';
+}
+
+function renderNav() {
+  const nav = document.getElementById('nav-list');
+  nav.innerHTML = TOPICS.map(t => {
+    const topicSolved = t.tasks.filter((_, i) => solved.has(t.id + '_' + i)).length;
+    const allSolved = topicSolved === t.tasks.length && t.tasks.length > 0;
+    return `<div class="nav-item${t.id === activeTopic ? ' active' : ''}${allSolved ? ' completed' : ''}"
+      onclick="setTopic('${t.id}')" style="--ic:${t.iconColor}">
+      <div class="nav-icon" style="background:${t.iconBg};color:${t.iconColor};font-size:16px;font-family:monospace;">${t.icon}</div>
+      <div class="nav-info">
+        <div class="nav-name">${t.name}</div>
+        <div class="nav-meta">${topicSolved}/${t.tasks.length} həll</div>
+      </div>
+      <div class="nav-check">✓</div>
+    </div>`;
+  }).join('');
+}
+
+function diffLabel(l) {
+  if (l === 'easy') return 'Asan';
+  if (l === 'medium') return 'Orta';
+  return 'Çətin';
+}
+
+function renderTopic() {
+  const t = TOPICS.find(x => x.id === activeTopic);
+  if (!t) return;
+
+  document.getElementById('breadcrumb-cur').textContent = t.name;
+
+  const counts = { easy: 0, medium: 0, hard: 0 };
+  t.tasks.forEach(task => counts[task.level]++);
+
+  document.getElementById('topic-header').innerHTML = `
+    <div class="topic-title-row">
+      <div class="topic-icon-big" style="background:${t.iconBg};color:${t.iconColor};font-size:24px;font-family:monospace;">${t.icon}</div>
+      <div>
+        <div class="topic-title">${t.name}</div>
+        <div class="topic-desc">${t.desc}</div>
+      </div>
+    </div>
+    <div class="topic-stats">
+      <div class="ts"><div class="ts-dot" style="background:var(--text3)"></div><span style="color:var(--text2)">${t.tasks.length} tapşırıq</span></div>
+      ${counts.easy > 0 ? `<div class="ts"><div class="ts-dot" style="background:var(--green)"></div><span style="color:var(--text2)">${counts.easy} asan</span></div>` : ''}
+      ${counts.medium > 0 ? `<div class="ts"><div class="ts-dot" style="background:var(--yellow)"></div><span style="color:var(--text2)">${counts.medium} orta</span></div>` : ''}
+      ${counts.hard > 0 ? `<div class="ts"><div class="ts-dot" style="background:var(--red)"></div><span style="color:var(--text2)">${counts.hard} çətin</span></div>` : ''}
+    </div>
+  `;
+
+  const filteredTasks = t.tasks.filter((task, _) => activeFilter === 'all' || task.level === activeFilter);
+  const tasksList = document.getElementById('tasks-list');
+  const emptyState = document.getElementById('empty-state');
+
+  if (filteredTasks.length === 0) {
+    tasksList.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+
+  emptyState.style.display = 'none';
+  tasksList.innerHTML = t.tasks.map((task, i) => {
+    const id = t.id + '_' + i;
+    const isSolved = solved.has(id);
+    const visible = activeFilter === 'all' || task.level === activeFilter;
+    const hCount = task.hints.length;
+    return `<div class="task-card${isSolved ? ' solved' : ''}" id="card_${id}" style="display:${visible ? 'block' : 'none'}">
+      <div class="task-top">
+        <div>
+          <div class="task-num"># ${String(i+1).padStart(2,'0')}</div>
+          <div class="task-title">${task.title}</div>
+        </div>
+        <div class="badges-row">
+          <div class="task-solved-badge">✓ Həll edildi</div>
+          <span class="level-badge level-${task.level}">${diffLabel(task.level)}</span>
+        </div>
+      </div>
+      <div class="task-body">
+        <div class="task-desc">${task.desc}</div>
+        <div class="schema-label">Cədvəl strukturu</div>
+        <div class="schema-block">${task.schema}</div>
+        <div class="editor-area">
+          <div class="editor-bar">
+            <span class="editor-lang">SQL — Oracle</span>
+            <div class="editor-dots">
+              <div class="editor-dot" style="background:#f87171"></div>
+              <div class="editor-dot" style="background:#fbbf24"></div>
+              <div class="editor-dot" style="background:#4ade80"></div>
+            </div>
+          </div>
+          <textarea class="sql-input" id="inp_${id}" placeholder="SELECT ..."></textarea>
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="btn btn-run" onclick="checkAnswer('${id}',${i})">▶ İcra et</button>
+        <button class="btn btn-hint" onclick="showHint('${id}',${i})">
+          İpucu <span class="hint-count" id="hc_${id}">0/${hCount}</span>
+        </button>
+        <button class="btn btn-solution" onclick="toggleSolution('${id}',${i})">Həll</button>
+        <button class="btn btn-reset" onclick="resetCard('${id}')">↺</button>
+      </div>
+      <div class="feedback-box" id="fb_${id}"></div>
+      <div class="solution-box" id="sb_${id}">
+        <div class="solution-label">— Həll yolu</div>
+        <div class="solution-code">${task.solution}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.setTopic = function(id) {
+  activeTopic = id;
+  activeFilter = 'all';
+  document.querySelectorAll('.diff-pill').forEach(p => {
+    p.classList.toggle('active', p.classList.contains('all'));
+  });
+  renderNav();
+  renderTopic();
+  document.getElementById('main').scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.filterDiff = function(level, el) {
+  activeFilter = level;
+  document.querySelectorAll('.diff-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  const t = TOPICS.find(x => x.id === activeTopic);
+  t.tasks.forEach((task, i) => {
+    const card = document.getElementById('card_' + t.id + '_' + i);
+    if (card) card.style.display = (level === 'all' || task.level === level) ? 'block' : 'none';
+  });
+  const visible = t.tasks.some((task) => level === 'all' || task.level === level);
+  document.getElementById('empty-state').style.display = visible ? 'none' : 'block';
+};
+
+window.checkAnswer = function(id, i) {
+  const t = TOPICS.find(x => x.id === activeTopic);
+  const task = t.tasks[i];
+  const val = (document.getElementById('inp_' + id) || {}).value || '';
+  const fb = document.getElementById('fb_' + id);
+
+  if (!val.trim()) {
+    fb.className = 'feedback-box show wrong';
+    fb.innerHTML = '✕ &nbsp; SQL sorğusu daxil edin.';
+    return;
+  }
+
+  if (task.check(val.trim())) {
+    fb.className = 'feedback-box show correct';
+    fb.innerHTML = '✓ &nbsp; Əla! Sorğu düzgündür!';
+    solved.add(id);
+    document.getElementById('card_' + id).classList.add('solved');
+    updateProgress();
+    renderNav();
+    confetti();
+  } else {
+    fb.className = 'feedback-box show wrong';
+    fb.innerHTML = '✕ &nbsp; Yanlış. İpucuna baxın və ya yenidən cəhd edin.';
+  }
+};
+
+window.showHint = function(id, i) {
+  const t = TOPICS.find(x => x.id === activeTopic);
+  const task = t.tasks[i];
+  const fb = document.getElementById('fb_' + id);
+  const hc = document.getElementById('hc_' + id);
+  const idx = hintState[id] || 0;
+  if (idx < task.hints.length) {
+    fb.className = 'feedback-box show hint';
+    fb.innerHTML = '💡 &nbsp;' + task.hints[idx];
+    hintState[id] = idx + 1;
+    hc.textContent = `${idx+1}/${task.hints.length}`;
+  } else {
+    fb.className = 'feedback-box show hint';
+    fb.innerHTML = '💡 &nbsp;Bütün ipucları göstərildi. "Həll" düyməsinə baxın.';
+  }
+};
+
+window.toggleSolution = function(id) {
+  const sb = document.getElementById('sb_' + id);
+  sb.classList.toggle('show');
+};
+
+window.resetCard = function(id) {
+  const inp = document.getElementById('inp_' + id);
+  if (inp) inp.value = '';
+  const fb = document.getElementById('fb_' + id);
+  if (fb) { fb.className = 'feedback-box'; fb.innerHTML = ''; }
+  const sb = document.getElementById('sb_' + id);
+  if (sb) sb.classList.remove('show');
+};
+
+function confetti() {
+  const emojis = ['🎉', '✨', '⚡', '🔥', '🎯'];
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => {
+      const el = document.createElement('div');
+      el.className = 'confetti';
+      el.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      el.style.left = (20 + Math.random() * 60) + 'vw';
+      el.style.top = (40 + Math.random() * 20) + 'vh';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 900);
+    }, i * 80);
+  }
+}
+
+// Init
+renderNav();
+renderTopic();
+updateProgress();
+</script>
+</body>
+</html>

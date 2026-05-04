@@ -770,6 +770,24 @@ const TOPICS = [
         solution: 'SELECT first_name || \' \' || last_name AS "Tam_Ad",\n       salary * 12 AS "Illik_Maas"\nFROM employees;',
         hints: ['|| operatoru mətnləri birləşdirir.', 'salary * 12 illik maaşı hesablayır.'],
         check: s => /\|\|/i.test(s) && /salary\s*\*\s*12/i.test(s)
+      },
+      {
+        title: 'CASE ifadəsi ilə kateqoriya',
+        level: 'hard',
+        desc: 'İşçilərin maaşına görə kateqoriya verin: 3000-dən az = "Aşağı", 3000-7000 arası = "Orta", 7000-dən çox = "Yüksək". CASE ifadəsi istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: "SELECT first_name, salary,\n  CASE\n    WHEN salary < 3000 THEN 'Aşağı'\n    WHEN salary BETWEEN 3000 AND 7000 THEN 'Orta'\n    ELSE 'Yüksək'\n  END AS kateqoriya\nFROM employees;",
+        hints: ['CASE WHEN ... THEN ... ELSE ... END sintaksisini istifadə edin.', 'Hər şərt üçün ayrı WHEN bloku yazın.', "ELSE 'Yüksək' — qalan bütün hallara aiddir."],
+        check: s => /case/i.test(s) && /when/i.test(s) && /then/i.test(s) && /end/i.test(s)
+      },
+      {
+        title: 'DECODE funksiyası',
+        level: 'hard',
+        desc: 'Department_id-yə görə departament adını göstərin: 10="Mühasibat", 20="İT", 30="Satış", digərləri="Digər". DECODE istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  department_id NUMBER\n)',
+        solution: "SELECT first_name,\n  DECODE(department_id,\n    10, 'Mühasibat',\n    20, 'İT',\n    30, 'Satış',\n    'Digər') AS departament\nFROM employees;",
+        hints: ['DECODE(dəyər, axtarılan1, nəticə1, axtarılan2, nəticə2, ..., default) sintaksisdir.', 'Son arqument tapılmadıqda qaytarılan default dəyərdir.'],
+        check: s => /decode\s*\(/i.test(s) && /department_id/i.test(s)
       }
     ]
   },
@@ -834,6 +852,33 @@ const TOPICS = [
         solution: 'SELECT first_name, salary, department_id\nFROM employees\nWHERE (department_id = 50 AND salary > 4000)\n   OR department_id = 80;',
         hints: ['AND iki şərtin hər ikisinin doğru olmasını tələb edir.', 'OR istənilən birinin doğru olması kifayət edir.', 'Mötərizə istifadə edin: (... AND ...) OR ...'],
         check: s => /and/i.test(s) && /or/i.test(s)
+      },
+      {
+        title: 'NOT IN istifadəsi',
+        level: 'hard',
+        desc: 'Department_id 10, 20, 30-da OLMAYAN işçiləri seçin. NOT IN istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, department_id\nFROM employees\nWHERE department_id NOT IN (10, 20, 30);',
+        hints: ['NOT IN siyahıda olmayan dəyərləri seçir.', 'WHERE department_id NOT IN (10, 20, 30)'],
+        check: s => /not\s+in\s*\(/i.test(s) && /10.*20.*30|10.*30.*20/i.test(s)
+      },
+      {
+        title: 'Çoxlu LIKE şərti',
+        level: 'hard',
+        desc: 'Adı "S" ilə başlayan VƏ soyadı "n" hərfi ilə bitən işçiləri tapın.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  last_name  VARCHAR2(50)\n)',
+        solution: "SELECT first_name, last_name\nFROM employees\nWHERE first_name LIKE 'S%'\n  AND last_name LIKE '%n';",
+        hints: ["first_name LIKE 'S%' — S ilə başlayan.", "last_name LIKE '%n' — n ilə bitən.", 'İki şərti AND ilə birləşdirin.'],
+        check: s => /first_name\s+like\s+'s%'/i.test(s) && /last_name\s+like\s+'%n'/i.test(s)
+      },
+      {
+        title: 'Tarix aralığı filtri',
+        level: 'hard',
+        desc: '2019 il ərzində (01.01.2019 - 31.12.2019) işə götürülmüş işçiləri seçin. TO_DATE və BETWEEN istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  hire_date  DATE\n)',
+        solution: "SELECT first_name, hire_date\nFROM employees\nWHERE hire_date BETWEEN TO_DATE('2019-01-01','YYYY-MM-DD')\n                    AND TO_DATE('2019-12-31','YYYY-MM-DD');",
+        hints: ['BETWEEN TO_DATE(...) AND TO_DATE(...) tarix aralığını yoxlayır.', "TO_DATE('2019-01-01','YYYY-MM-DD') formatında yazın."],
+        check: s => /between/i.test(s) && (s.match(/to_date/gi)||[]).length >= 2
       }
     ]
   },
@@ -898,6 +943,33 @@ const TOPICS = [
         solution: "SELECT first_name, hire_date\nFROM employees\nWHERE hire_date > TO_DATE('2020-01-01', 'YYYY-MM-DD');",
         hints: ["TO_DATE('tarix','format') string-i tarixə çevirir.", "Format: 'YYYY-MM-DD'"],
         check: s => /to_date/i.test(s) && /hire_date/i.test(s)
+      },
+      {
+        title: 'ROUND və TRUNC',
+        level: 'hard',
+        desc: 'Hər işçinin maaşını 2 onluq rəqəmə yuvarlaqlaşdırın (ROUND) və tam ədədə endir (TRUNC). Hər ikisini eyni sorğuda göstərin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name,\n       ROUND(salary, 2)  AS yuvarlaq_maas,\n       TRUNC(salary, 0)  AS tam_maas\nFROM employees;',
+        hints: ['ROUND(ədəd, onluq_say) yuvarlaqlaşdırır.', 'TRUNC(ədəd, 0) onluq hissəni kəsir.'],
+        check: s => /round\s*\(/i.test(s) && /trunc\s*\(/i.test(s)
+      },
+      {
+        title: 'SUBSTR və INSTR',
+        level: 'hard',
+        desc: 'İşçilərin email-indən @ işarəsindən əvvəlki hissəni (istifadəçi adını) çıxarın. SUBSTR və INSTR istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  email      VARCHAR2(100)  -- məs: ali.quliyev@company.com\n)',
+        solution: 'SELECT first_name,\n       SUBSTR(email, 1, INSTR(email, \'@\') - 1) AS istifadeci_adi\nFROM employees;',
+        hints: ['INSTR(mətn, simvol) simvolun mövqeyini tapır.', 'SUBSTR(mətn, başlanğıc, uzunluq) alt sətir çıxarır.', "INSTR(email, '@') - 1 @ işarəsindən əvvəlki mövqedir."],
+        check: s => /substr\s*\(/i.test(s) && /instr\s*\(/i.test(s)
+      },
+      {
+        title: 'MONTHS_BETWEEN ilə iş stajı',
+        level: 'hard',
+        desc: 'Hər işçinin neçə ay işlədiyini hesablayın. MONTHS_BETWEEN və SYSDATE istifadə edin. Nəticəni tam ədədə yuvarlaqlaşdırın.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  hire_date  DATE\n)',
+        solution: 'SELECT first_name,\n       ROUND(MONTHS_BETWEEN(SYSDATE, hire_date)) AS is_stajs_ay\nFROM employees;',
+        hints: ['MONTHS_BETWEEN(tarix1, tarix2) iki tarix arasındakı ayları qaytarır.', 'SYSDATE cari tarixi verir.', 'ROUND() ilə tam ədədə yuvarlaqlaşdırın.'],
+        check: s => /months_between/i.test(s) && /sysdate/i.test(s)
       }
     ]
   },
@@ -944,6 +1016,24 @@ const TOPICS = [
         solution: 'SELECT department_id,\n       ROUND(AVG(salary), 2) AS orta_maas\nFROM employees\nGROUP BY department_id\nHAVING AVG(salary) > 6000\nORDER BY orta_maas DESC;',
         hints: ['HAVING AVG(salary) > 6000 istifadə edin.', 'ROUND(AVG(salary), 2) dəqiq nəticə verir.'],
         check: s => /having\s+avg\s*\(\s*salary\s*\)\s*>\s*6000/i.test(s)
+      },
+      {
+        title: 'ROLLUP ilə cəm sətri',
+        level: 'hard',
+        desc: 'Hər departamentin ümumi maaşını və bütün cədvəlin ümumi maaşını eyni sorğuda göstərin. GROUP BY ROLLUP istifadə edin.',
+        schema: 'EMPLOYEES(\n  department_id NUMBER,\n  salary        NUMBER\n)',
+        solution: 'SELECT department_id,\n       SUM(salary) AS toplam_maas\nFROM employees\nGROUP BY ROLLUP(department_id);',
+        hints: ['ROLLUP qrupların cəminə əlavə olaraq ümumi cəm sətri əlavə edir.', 'GROUP BY ROLLUP(department_id) sintaksisi istifadə edin.'],
+        check: s => /rollup\s*\(/i.test(s)
+      },
+      {
+        title: 'Analitik funksiya: ROW_NUMBER',
+        level: 'hard',
+        desc: 'Hər departament daxilində işçiləri maaşa görə sıralayın (ən yüksəkdən başlayaraq) və sıra nömrəsini göstərin. ROW_NUMBER() OVER (PARTITION BY ... ORDER BY ...) istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  salary        NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, salary, department_id,\n       ROW_NUMBER() OVER (\n         PARTITION BY department_id\n         ORDER BY salary DESC\n       ) AS sira\nFROM employees;',
+        hints: ['ROW_NUMBER() analitik funksiyadır.', 'PARTITION BY department_id — hər departament ayrıca qrupdur.', 'ORDER BY salary DESC — maaşa görə azalan sıralama.'],
+        check: s => /row_number\s*\(\s*\)/i.test(s) && /partition\s+by/i.test(s) && /order\s+by/i.test(s)
       }
     ]
   },
@@ -993,6 +1083,24 @@ const TOPICS = [
         solution: 'SELECT e.first_name, d.department_name, l.city\nFROM employees e\nJOIN departments d ON e.department_id = d.department_id\nJOIN locations l   ON d.location_id = l.location_id;',
         hints: ['Hər JOIN üçün ayrı ON şərti yazın.', 'FROM employees e JOIN departments d ON ... JOIN locations l ON ...'],
         check: s => (s.match(/join/gi) || []).length >= 2
+      },
+      {
+        title: 'JOIN + GROUP BY + HAVING',
+        level: 'hard',
+        desc: '3-dən çox işçisi olan departamentlərin adını və işçi sayını göstərin. JOIN və HAVING birlikdə istifadə edin.',
+        schema: 'EMPLOYEES(employee_id, department_id)\nDEPARTMENTS(department_id, department_name)',
+        solution: 'SELECT d.department_name, COUNT(e.employee_id) AS isci_sayi\nFROM departments d\nJOIN employees e ON d.department_id = e.department_id\nGROUP BY d.department_name\nHAVING COUNT(e.employee_id) > 3\nORDER BY isci_sayi DESC;',
+        hints: ['Əvvəlcə JOIN ilə birləşdir, sonra GROUP BY, sonra HAVING.', 'HAVING COUNT(e.employee_id) > 3'],
+        check: s => /join/i.test(s) && /group\s+by/i.test(s) && /having/i.test(s)
+      },
+      {
+        title: 'FULL OUTER JOIN',
+        level: 'hard',
+        desc: 'Bütün işçiləri VƏ bütün departamentləri göstərin — heç birinin uyğunu olmasa da. FULL OUTER JOIN istifadə edin.',
+        schema: 'EMPLOYEES(employee_id, first_name, department_id)\nDEPARTMENTS(department_id, department_name)',
+        solution: 'SELECT e.first_name, d.department_name\nFROM employees e\nFULL OUTER JOIN departments d\n  ON e.department_id = d.department_id;',
+        hints: ['FULL OUTER JOIN hər iki cədvəlin bütün sətirləri saxlayır.', 'Uyğunluq olmayan sütunlar NULL göstərilir.'],
+        check: s => /full\s+outer\s+join/i.test(s)
       }
     ]
   },
@@ -1042,6 +1150,24 @@ const TOPICS = [
           const selectCount = (s.match(/select/gi)||[]).length;
           return selectCount >= 2 && /count/i.test(s);
         }
+      },
+      {
+        title: 'NOT EXISTS',
+        level: 'hard',
+        desc: 'Heç sifariş verməmiş müştəriləri seçin. NOT EXISTS istifadə edin.',
+        schema: 'CUSTOMERS(customer_id, customer_name)\nORDERS(order_id, customer_id)',
+        solution: 'SELECT customer_name\nFROM customers c\nWHERE NOT EXISTS (\n  SELECT 1\n  FROM orders o\n  WHERE o.customer_id = c.customer_id\n);',
+        hints: ['NOT EXISTS — subquery boş nəticə qaytardıqda TRUE verir.', 'EXISTS-in əksidir.'],
+        check: s => /not\s+exists\s*\(/i.test(s)
+      },
+      {
+        title: 'Ən yüksək maaşlı işçi hər departamentdə',
+        level: 'hard',
+        desc: 'Hər departamentdə ən yüksək maaş alan işçinin adını tapın. Korrelyasiyalı subquery istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name    VARCHAR2(50),\n  salary        NUMBER,\n  department_id NUMBER\n)',
+        solution: 'SELECT first_name, salary, department_id\nFROM employees e\nWHERE salary = (\n  SELECT MAX(salary)\n  FROM employees e2\n  WHERE e2.department_id = e.department_id\n);',
+        hints: ['Korrelyasiyalı subquery hər sətir üçün işləyir.', 'WHERE salary = (SELECT MAX(salary) FROM employees WHERE department_id = ...)'],
+        check: s => /select\s+max\s*\(\s*salary\s*\)/i.test(s) && /department_id/i.test(s)
       }
     ]
   },
@@ -1079,6 +1205,24 @@ const TOPICS = [
         solution: 'SELECT first_name, salary\nFROM (\n  SELECT first_name, salary\n  FROM employees\n  ORDER BY salary DESC\n)\nWHERE ROWNUM <= 5;',
         hints: ['Oracle-da ROWNUM xüsusi psevdo-sütundur.', 'Əvvəlcə ORDER BY ilə sıralayın, sonra ROWNUM tətbiq edin.', 'Subquery içdə ORDER BY, xaricdə ROWNUM <= 5'],
         check: s => /rownum\s*<=\s*5/i.test(s) && /order\s+by\s+salary\s+desc/i.test(s)
+      },
+      {
+        title: 'FETCH FIRST (Oracle 12c+)',
+        level: 'hard',
+        desc: 'Ən az maaş alan 3 işçini seçin. FETCH FIRST ROWS ONLY sintaksisini istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary\nFROM employees\nORDER BY salary ASC\nFETCH FIRST 3 ROWS ONLY;',
+        hints: ['FETCH FIRST N ROWS ONLY — müasir Oracle sintaksisidir.', 'ORDER BY salary ASC — əvvəlcə kiçikdən böyüyə sırala.'],
+        check: s => /fetch\s+first\s+3\s+rows\s+only/i.test(s) && /order\s+by\s+salary/i.test(s)
+      },
+      {
+        title: 'DENSE_RANK ilə sıralama',
+        level: 'hard',
+        desc: 'Bütün işçilərə maaşlarına görə sıra nömrəsi verin. Eyni maaşlı işçilər eyni sıra nömrəsi almalıdır. DENSE_RANK() istifadə edin.',
+        schema: 'EMPLOYEES(\n  first_name VARCHAR2(50),\n  salary     NUMBER\n)',
+        solution: 'SELECT first_name, salary,\n       DENSE_RANK() OVER (ORDER BY salary DESC) AS sira\nFROM employees;',
+        hints: ['DENSE_RANK() analitik funksiyadır.', 'OVER (ORDER BY salary DESC) — maaşa görə azalan sıralama.', 'DENSE_RANK eyni dəyərlərə eyni sıra verir, boşluq buraxmır.'],
+        check: s => /dense_rank\s*\(\s*\)/i.test(s) && /over\s*\(/i.test(s)
       }
     ]
   }
